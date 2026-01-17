@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 
 // Default data - only used if no saved data exists
 const defaultPlayers = {
-  SHAW: { elo: 1763, peakElo: 1763 },
-  AADI: { elo: 1639, peakElo: 1639 },
-  BEN: { elo: 1620, peakElo: 1627 },
-  YEAGER: { elo: 1565, peakElo: 1606 },
-  HENRY: { elo: 1499, peakElo: 1576 },
-  NICK: { elo: 1487, peakElo: 1500 },
-  SEAMUS: { elo: 1452, peakElo: 1500 },
-  RYAN: { elo: 1451, peakElo: 1500 },
-  ELI: { elo: 1435, peakElo: 1562 },
-  ASHER: { elo: 1368, peakElo: 1521 },
+  SHAW: { elo: 1685, peakElo: 1685 },
+  AADI: { elo: 1592, peakElo: 1592 },
+  BEN: { elo: 1575, peakElo: 1589 },
+  NICK: { elo: 1493, peakElo: 1500 },
+  SEAMUS: { elo: 1474, peakElo: 1500 },
+  RYAN: { elo: 1474, peakElo: 1500 },
+  YEAGER: { elo: 1471, peakElo: 1562 },
+  HENRY: { elo: 1461, peakElo: 1538 },
+  ASHER: { elo: 1414, peakElo: 1514 },
+  ELI: { elo: 1414, peakElo: 1525 },
 };
 
 const defaultGames = [
@@ -56,6 +56,7 @@ const defaultGames = [
   { id: 39, home: 'ELI', away: 'BEN', teamH: 'USC', teamA: 'Texas A&M', scoreH: 7, scoreA: 28, session: 4, date: '2025-01-16' },
   { id: 40, home: 'HENRY', away: 'ELI', teamH: 'Georgia', teamA: 'Miami', scoreH: 0, scoreA: 21, session: 4, date: '2025-01-16' },
   { id: 41, home: 'YEAGER', away: 'ELI', teamH: 'USC', teamA: 'Texas', scoreH: 10, scoreA: 7, session: 4, date: '2025-01-16' },
+  { id: 42, home: 'YEAGER', away: 'BEN', teamH: 'Texas Tech', teamA: 'Indiana', scoreH: 0, scoreA: 28, session: 5, date: '2025-01-16' },
 ];
 
 const teamElos = {
@@ -230,13 +231,16 @@ export default function App() {
   
   const formatDate = (dateStr) => {
     if (!dateStr) return 'Pre-Tracked';
-    const date = new Date(dateStr + 'T00:00:00');
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const gameDate = new Date(date); gameDate.setHours(0, 0, 0, 0);
-    if (gameDate.getTime() === today.getTime()) return 'Today';
-    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
-    if (gameDate.getTime() === yesterday.getTime()) return 'Yesterday';
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    if (dateStr === todayStr) return 'Today';
+    if (dateStr === yesterdayStr) return 'Yesterday';
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${monthNames[month - 1]} ${day}`;
   };
   
   const recalculateAllElos = (gamesList) => {
@@ -443,12 +447,18 @@ export default function App() {
                       <span>S{g.session}</span>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: homeWon ? '700' : '400', color: homeWon ? '#34C759' : text }}>{g.home} ({g.teamH}) {homeWon && '✓'}</div>
-                      <div style={{ fontWeight: !homeWon ? '700' : '400', color: !homeWon ? '#34C759' : text }}>{g.away} ({g.teamA}) {!homeWon && '✓'}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ textAlign: 'center', flex: 1 }}>
+                      <div style={{ fontWeight: '600', color: homeWon ? '#34C759' : text }}>{g.home}</div>
+                      <div style={{ fontSize: '12px', color: sub }}>{g.teamH}</div>
+                      <div style={{ fontSize: '24px', fontWeight: '700', color: homeWon ? '#34C759' : sub }}>{g.scoreH}</div>
                     </div>
-                    <div style={{ fontSize: '24px', fontWeight: '700' }}>{g.scoreH} - {g.scoreA}</div>
+                    <div style={{ padding: '0 16px', color: sub }}>VS</div>
+                    <div style={{ textAlign: 'center', flex: 1 }}>
+                      <div style={{ fontWeight: '600', color: !homeWon ? '#34C759' : text }}>{g.away}</div>
+                      <div style={{ fontSize: '12px', color: sub }}>{g.teamA}</div>
+                      <div style={{ fontSize: '24px', fontWeight: '700', color: !homeWon ? '#34C759' : sub }}>{g.scoreA}</div>
+                    </div>
                   </div>
                 </div>
               );
@@ -497,10 +507,72 @@ export default function App() {
                 <div style={{ fontSize: '14px' }}>{predP2}: <strong style={{ color: '#FF9500' }}>{prediction.prob2}%</strong></div>
               </div>
             </div>
-            <div style={{ height: '24px', borderRadius: '12px', overflow: 'hidden', display: 'flex' }}>
+            <div style={{ height: '24px', borderRadius: '12px', overflow: 'hidden', display: 'flex', marginBottom: '20px' }}>
               <div style={{ width: `${prediction.prob1}%`, backgroundColor: '#34C759', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '12px', fontWeight: '600' }}>{prediction.prob1}%</div>
               <div style={{ width: `${prediction.prob2}%`, backgroundColor: '#FF9500', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '12px', fontWeight: '600' }}>{prediction.prob2}%</div>
             </div>
+            
+            {/* Elo Stakes */}
+            {(() => {
+              const p1Elo = players[predP1]?.elo || 1500;
+              const p2Elo = players[predP2]?.elo || 1500;
+              const K = 32;
+              const avgMargin = 14;
+              const mov = Math.max(0.5, Math.min(2.0, Math.log(avgMargin + 1) * 0.8));
+              
+              // P1 wins scenario
+              const expectedP1 = 1 / (1 + Math.pow(10, (p2Elo - p1Elo) / 400));
+              const p1WinGain = Math.round(K * (1 - expectedP1) * mov);
+              const p1WinLoss = Math.round(p1WinGain * 0.95);
+              
+              // P2 wins scenario
+              const expectedP2 = 1 / (1 + Math.pow(10, (p1Elo - p2Elo) / 400));
+              const p2WinGain = Math.round(K * (1 - expectedP2) * mov);
+              const p2WinLoss = Math.round(p2WinGain * 0.95);
+              
+              return (
+                <div>
+                  <div style={{ fontSize: '12px', color: sub, marginBottom: '12px', fontWeight: '600' }}>ELO STAKES (avg margin)</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div style={{ backgroundColor: dark ? '#333' : '#f5f5f5', padding: '16px', borderRadius: '12px' }}>
+                      <div style={{ fontWeight: '700', marginBottom: '8px', textAlign: 'center' }}>{predP1}</div>
+                      <div style={{ fontSize: '13px', color: sub, textAlign: 'center', marginBottom: '8px' }}>Current: <strong style={{ color: text }}>{p1Elo}</strong></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '10px', color: sub }}>IF WIN</div>
+                          <div style={{ color: '#34C759', fontWeight: '700' }}>+{p1WinGain}</div>
+                          <div style={{ fontSize: '11px', color: sub }}>→ {p1Elo + p1WinGain}</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '10px', color: sub }}>IF LOSE</div>
+                          <div style={{ color: '#FF3B30', fontWeight: '700' }}>-{p2WinLoss}</div>
+                          <div style={{ fontSize: '11px', color: sub }}>→ {p1Elo - p2WinLoss}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ backgroundColor: dark ? '#333' : '#f5f5f5', padding: '16px', borderRadius: '12px' }}>
+                      <div style={{ fontWeight: '700', marginBottom: '8px', textAlign: 'center' }}>{predP2}</div>
+                      <div style={{ fontSize: '13px', color: sub, textAlign: 'center', marginBottom: '8px' }}>Current: <strong style={{ color: text }}>{p2Elo}</strong></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '10px', color: sub }}>IF WIN</div>
+                          <div style={{ color: '#34C759', fontWeight: '700' }}>+{p2WinGain}</div>
+                          <div style={{ fontSize: '11px', color: sub }}>→ {p2Elo + p2WinGain}</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '10px', color: sub }}>IF LOSE</div>
+                          <div style={{ color: '#FF3B30', fontWeight: '700' }}>-{p1WinLoss}</div>
+                          <div style={{ fontSize: '11px', color: sub }}>→ {p2Elo - p1WinLoss}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '11px', color: sub, marginTop: '8px', textAlign: 'center', fontStyle: 'italic' }}>
+                    *Based on average 14-point margin. Actual changes vary by final score.
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -673,25 +745,198 @@ export default function App() {
       </div>
 
       {/* Game Detail Modal */}
-      {selGame && (
-        <div onClick={() => setSelGame(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', zIndex: 1000 }}>
-          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: card, borderRadius: '16px', padding: '24px', maxWidth: '450px', width: '100%' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0 }}>Game {selGame.id}</h3>
-              <button onClick={() => setSelGame(null)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: text }}>×</button>
-            </div>
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <div style={{ fontWeight: selGame.scoreH > selGame.scoreA ? '700' : '400', fontSize: '18px', color: selGame.scoreH > selGame.scoreA ? '#34C759' : text }}>{selGame.home} ({selGame.teamH}) {selGame.scoreH > selGame.scoreA && '✓'}</div>
-              <div style={{ fontSize: '36px', fontWeight: '800', margin: '8px 0' }}>{selGame.scoreH} - {selGame.scoreA}</div>
-              <div style={{ fontWeight: selGame.scoreA > selGame.scoreH ? '700' : '400', fontSize: '18px', color: selGame.scoreA > selGame.scoreH ? '#34C759' : text }}>{selGame.away} ({selGame.teamA}) {selGame.scoreA > selGame.scoreH && '✓'}</div>
-            </div>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button onClick={() => handleStartEdit(selGame)} style={{ flex: 1, padding: '12px', backgroundColor: '#007AFF', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '600', cursor: 'pointer' }}>✏️ Edit</button>
-              <button onClick={() => handleDeleteGame(selGame.id)} style={{ padding: '12px 16px', backgroundColor: '#FF3B30', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '600', cursor: 'pointer' }}>🗑️</button>
+      {selGame && (() => {
+        // Calculate Elos at the time of this game
+        const elosAtGame = {};
+        const recordsAtGame = {};
+        Object.keys(players).forEach(p => { elosAtGame[p] = 1500; recordsAtGame[p] = { w: 0, l: 0 }; });
+        
+        let homeEloBefore = 1500, awayEloBefore = 1500;
+        let homeEloAfter = 1500, awayEloAfter = 1500;
+        let eloGain = 0, eloLoss = 0;
+        let homeRecordBefore = { w: 0, l: 0 }, awayRecordBefore = { w: 0, l: 0 };
+        
+        games.forEach(g => {
+          if (!elosAtGame[g.home]) { elosAtGame[g.home] = 1500; recordsAtGame[g.home] = { w: 0, l: 0 }; }
+          if (!elosAtGame[g.away]) { elosAtGame[g.away] = 1500; recordsAtGame[g.away] = { w: 0, l: 0 }; }
+          
+          if (g.id === selGame.id) {
+            homeEloBefore = elosAtGame[g.home];
+            awayEloBefore = elosAtGame[g.away];
+            homeRecordBefore = { ...recordsAtGame[g.home] };
+            awayRecordBefore = { ...recordsAtGame[g.away] };
+          }
+          
+          const homeWon = g.scoreH > g.scoreA;
+          const winner = homeWon ? g.home : g.away;
+          const loser = homeWon ? g.away : g.home;
+          const margin = Math.abs(g.scoreH - g.scoreA);
+          const K = 32;
+          const winnerElo = elosAtGame[winner];
+          const loserElo = elosAtGame[loser];
+          const expected = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
+          const mov = Math.max(0.5, Math.min(2.0, Math.log(margin + 1) * 0.8));
+          const gain = Math.round(K * (1 - expected) * mov);
+          const loss = Math.round(gain * 0.95);
+          
+          elosAtGame[winner] = winnerElo + gain;
+          elosAtGame[loser] = loserElo - loss;
+          recordsAtGame[winner].w++;
+          recordsAtGame[loser].l++;
+          
+          if (g.id === selGame.id) {
+            eloGain = gain;
+            eloLoss = loss;
+            homeEloAfter = elosAtGame[g.home];
+            awayEloAfter = elosAtGame[g.away];
+          }
+        });
+        
+        const homeWon = selGame.scoreH > selGame.scoreA;
+        const margin = Math.abs(selGame.scoreH - selGame.scoreA);
+        const totalPoints = selGame.scoreH + selGame.scoreA;
+        const movMultiplier = Math.max(0.5, Math.min(2.0, Math.log(margin + 1) * 0.8));
+        const expectedWin = 1 / (1 + Math.pow(10, (awayEloBefore - homeEloBefore) / 400));
+        const wasUpset = (homeWon && expectedWin < 0.5) || (!homeWon && expectedWin > 0.5);
+        
+        // H2H at time of game
+        const h2hBefore = games.filter(g => g.id < selGame.id && 
+          ((g.home === selGame.home && g.away === selGame.away) || (g.home === selGame.away && g.away === selGame.home)));
+        let homeH2H = 0, awayH2H = 0;
+        h2hBefore.forEach(g => {
+          if ((g.home === selGame.home && g.scoreH > g.scoreA) || (g.away === selGame.home && g.scoreA > g.scoreH)) homeH2H++;
+          else awayH2H++;
+        });
+        
+        // Team Elos
+        const homeTeamElo = teamElos[selGame.teamH] || 1500;
+        const awayTeamElo = teamElos[selGame.teamA] || 1500;
+        
+        return (
+          <div onClick={() => setSelGame(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', zIndex: 1000, overflowY: 'auto' }}>
+            <div onClick={e => e.stopPropagation()} style={{ backgroundColor: card, borderRadius: '16px', padding: '24px', maxWidth: '500px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div>
+                  <h3 style={{ margin: 0 }}>Game {selGame.id}</h3>
+                  <div style={{ fontSize: '12px', color: sub }}>{formatDate(selGame.date)} • Session {selGame.session}</div>
+                </div>
+                <button onClick={() => setSelGame(null)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: text }}>×</button>
+              </div>
+              
+              {/* Score */}
+              <div style={{ textAlign: 'center', marginBottom: '20px', padding: '16px', backgroundColor: dark ? '#333' : '#f5f5f5', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontWeight: '700', fontSize: '18px', color: homeWon ? '#34C759' : text }}>{selGame.home}</div>
+                    <div style={{ fontSize: '12px', color: sub }}>{selGame.teamH}</div>
+                    <div style={{ fontSize: '36px', fontWeight: '800', color: homeWon ? '#34C759' : sub }}>{selGame.scoreH}</div>
+                  </div>
+                  <div style={{ color: sub, fontSize: '14px' }}>VS</div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontWeight: '700', fontSize: '18px', color: !homeWon ? '#34C759' : text }}>{selGame.away}</div>
+                    <div style={{ fontSize: '12px', color: sub }}>{selGame.teamA}</div>
+                    <div style={{ fontSize: '36px', fontWeight: '800', color: !homeWon ? '#34C759' : sub }}>{selGame.scoreA}</div>
+                  </div>
+                </div>
+                {wasUpset && <div style={{ marginTop: '8px', padding: '4px 12px', backgroundColor: '#FF9500', color: '#fff', borderRadius: '12px', fontSize: '12px', fontWeight: '600', display: 'inline-block' }}>🚨 UPSET</div>}
+              </div>
+              
+              {/* Elo Changes */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: '12px', color: sub, marginBottom: '8px', fontWeight: '600' }}>ELO CHANGES</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div style={{ padding: '12px', backgroundColor: dark ? '#333' : '#f5f5f5', borderRadius: '8px' }}>
+                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>{selGame.home}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: sub }}>{homeEloBefore}</span>
+                      <span>→</span>
+                      <span style={{ fontWeight: '700' }}>{homeEloAfter}</span>
+                      <span style={{ color: homeWon ? '#34C759' : '#FF3B30', fontWeight: '700' }}>
+                        ({homeWon ? '+' + eloGain : '-' + eloLoss})
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ padding: '12px', backgroundColor: dark ? '#333' : '#f5f5f5', borderRadius: '8px' }}>
+                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>{selGame.away}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: sub }}>{awayEloBefore}</span>
+                      <span>→</span>
+                      <span style={{ fontWeight: '700' }}>{awayEloAfter}</span>
+                      <span style={{ color: !homeWon ? '#34C759' : '#FF3B30', fontWeight: '700' }}>
+                        ({!homeWon ? '+' + eloGain : '-' + eloLoss})
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Game Stats */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: '12px', color: sub, marginBottom: '8px', fontWeight: '600' }}>GAME STATS</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  <div style={{ padding: '12px', backgroundColor: dark ? '#333' : '#f5f5f5', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '20px', fontWeight: '700' }}>{margin}</div>
+                    <div style={{ fontSize: '11px', color: sub }}>Margin</div>
+                  </div>
+                  <div style={{ padding: '12px', backgroundColor: dark ? '#333' : '#f5f5f5', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '20px', fontWeight: '700' }}>{totalPoints}</div>
+                    <div style={{ fontSize: '11px', color: sub }}>Total Pts</div>
+                  </div>
+                  <div style={{ padding: '12px', backgroundColor: dark ? '#333' : '#f5f5f5', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '20px', fontWeight: '700' }}>{movMultiplier.toFixed(2)}x</div>
+                    <div style={{ fontSize: '11px', color: sub }}>Elo Mult</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Pre-Game Context */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: '12px', color: sub, marginBottom: '8px', fontWeight: '600' }}>PRE-GAME CONTEXT</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div style={{ padding: '12px', backgroundColor: dark ? '#333' : '#f5f5f5', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '11px', color: sub }}>Win Probability</div>
+                    <div style={{ fontWeight: '600' }}>{selGame.home}: {Math.round(expectedWin * 100)}%</div>
+                    <div style={{ fontWeight: '600' }}>{selGame.away}: {Math.round((1 - expectedWin) * 100)}%</div>
+                  </div>
+                  <div style={{ padding: '12px', backgroundColor: dark ? '#333' : '#f5f5f5', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '11px', color: sub }}>H2H Before</div>
+                    <div style={{ fontWeight: '600' }}>{h2hBefore.length > 0 ? `${selGame.home} ${homeH2H}-${awayH2H} ${selGame.away}` : 'First meeting'}</div>
+                  </div>
+                  <div style={{ padding: '12px', backgroundColor: dark ? '#333' : '#f5f5f5', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '11px', color: sub }}>{selGame.home} Record</div>
+                    <div style={{ fontWeight: '600' }}>{homeRecordBefore.w}-{homeRecordBefore.l} ({homeEloBefore} Elo)</div>
+                  </div>
+                  <div style={{ padding: '12px', backgroundColor: dark ? '#333' : '#f5f5f5', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '11px', color: sub }}>{selGame.away} Record</div>
+                    <div style={{ fontWeight: '600' }}>{awayRecordBefore.w}-{awayRecordBefore.l} ({awayEloBefore} Elo)</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Team Info */}
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ fontSize: '12px', color: sub, marginBottom: '8px', fontWeight: '600' }}>TEAM RATINGS</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div style={{ padding: '12px', backgroundColor: dark ? '#333' : '#f5f5f5', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontWeight: '600' }}>{selGame.teamH}</div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: homeTeamElo > awayTeamElo ? '#34C759' : sub }}>{homeTeamElo}</div>
+                  </div>
+                  <div style={{ padding: '12px', backgroundColor: dark ? '#333' : '#f5f5f5', borderRadius: '8px', textAlign: 'center' }}>
+                    <div style={{ fontWeight: '600' }}>{selGame.teamA}</div>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: awayTeamElo > homeTeamElo ? '#34C759' : sub }}>{awayTeamElo}</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button onClick={() => handleStartEdit(selGame)} style={{ flex: 1, padding: '12px', backgroundColor: '#007AFF', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '600', cursor: 'pointer' }}>✏️ Edit</button>
+                <button onClick={() => handleDeleteGame(selGame.id)} style={{ padding: '12px 16px', backgroundColor: '#FF3B30', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '600', cursor: 'pointer' }}>🗑️</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Edit Game Modal */}
       {editGame && (
